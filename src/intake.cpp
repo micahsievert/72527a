@@ -1,7 +1,7 @@
 #include "intake.hpp"
 
 Intake::Intake()
-    : intakeMotor(5) {
+    : intakeMotor(-15) {
     
     intakeMotor.set_brake_mode(pros::E_MOTOR_BRAKE_COAST);
     }

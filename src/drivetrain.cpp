@@ -4,25 +4,22 @@
 #include <utility>
 
 Drivetrain::Drivetrain()
-    :   leftFront(1),
-        leftBack(2),
-        rightFront(3),
-        rightBack(4) {
+    :   leftFront(-18),
+        leftBack(-16),
+        rightFront(12),
+        rightBack(3) {
 }
 
 double Drivetrain::applyDeadband(double input) {
     const double DEADBAND = 5.0;
-    if (std::abs(input) < DEADBAND) {
-        return 0;
-    }
-    return input;
+    if (std::abs(input) < DEADBAND) { return 0; } 
+    else { return input; }
 }
 double Drivetrain::applyCubicCurve(double input) {
     double inputCubed = input*input*input;
     double maxCubed = 127*127*127;
     double percentPower = inputCubed/maxCubed;
     double cubicPower = percentPower * 127;
-
     double linearPower = input;
 
     double cubicWeight = 5; // OK to change
@@ -32,26 +29,19 @@ double Drivetrain::applyCubicCurve(double input) {
 
 double Drivetrain::applyQuadraticCurve(double input) {
     double inputSquared;
-    if (input < 0) {
-        inputSquared = input * input * -1;
-    } else {
-        inputSquared = input * input;
-    }
-    
+    if (input < 0) { inputSquared = input * input * -1; } 
+    else { inputSquared = input * input; }
 
     double maxSquared = 127 * 127;
     double percentPower = inputSquared / maxSquared;
     double quadraticPower = percentPower * 127;
-
     double linearPower = input;
 
     double quadraticWeight = 5; // OK to change
     double linearWeight = 1;   // OK to change
-
     return (quadraticPower * quadraticWeight + linearPower * linearWeight) / (quadraticWeight + linearWeight);
 }
     
-
 std::pair<double, double> Drivetrain::mixForwardTurn(double forward, double turn) {
     double leftPower = forward + turn;
     double rightPower = forward - turn;
@@ -65,13 +55,11 @@ std::pair<double, double> Drivetrain::normalizeMotorPowers(double left, double r
     if (biggerValue > 127.0) {
         double scaleFactor = 127.0 / biggerValue;
         normLeft = left * scaleFactor;
-        normRight = right * scaleFactor;
-        
+        normRight = right * scaleFactor; 
     } else {
         normLeft = left;
         normRight = right;
     }
-    
     return {normLeft,normRight};
 }
 
@@ -99,7 +87,6 @@ double Drivetrain::slewify(double requestedPower, double prevPower){
     slewn = std::clamp(slewn, -127.0, 127.0);
     return slewn;
 }
-
 
 std::pair<double, double> Drivetrain::applySlew(double left, double right) {
     double requestedLeft = left;
@@ -143,8 +130,6 @@ void Drivetrain::powerMotors(double leftPower, double rightPower) {
     rightBack.move(rightPower);
 }
 
-
-
 void Drivetrain::arcade(double forward, double turn) {
     //Filter out deadband values
     forward = applyDeadband(forward);
@@ -164,6 +149,7 @@ void Drivetrain::arcade(double forward, double turn) {
     auto [slewnLeftPower, slewnRightPower] = applySlew(normLeftPower, normRightPower);
 
     powerMotors(slewnLeftPower, slewnRightPower);
+    //powerMotors(0,0);
 }
 
 void Drivetrain::tank(double leftPower, double rightPower) {
@@ -183,9 +169,11 @@ void Drivetrain::tank(double leftPower, double rightPower) {
 
     powerMotors(slewnLeftPower, slewnRightPower);
 }
+
 void Drivetrain::simpleTank(double leftPower, double rightPower) {
     powerMotors(leftPower, rightPower);
 }
+
 void Drivetrain::simpleArcade(double forward, double turn) {
     auto [leftPower, rightPower] = mixForwardTurn(forward, turn);
     powerMotors(leftPower, rightPower);

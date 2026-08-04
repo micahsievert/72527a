@@ -6,21 +6,28 @@
 enum class LiftState {
     Up,
     Down,
-    Hold
+    Hold,
+    Automatic
 };
 
 class Lift {
     public:
         Lift();
+        void initialize();
 
         void setState(LiftState newState);
         LiftState getState() const;
         void update();
 
+        void setTarget(double target);
+        bool atTarget(double tolerance);
+        double getPosition();
+        void updatePositionControl();
+
     private:
         pros::Motor liftMotor;
         LiftState state = LiftState::Hold;
-        void liftUp();
-        void liftDown();
+        void moveLift(double power);
         void liftHold();
+        double targetPosition = 0.0;
 };
