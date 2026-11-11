@@ -145,6 +145,16 @@ void initialize() { // INIT
 void disabled() {}
 void competition_initialize() {}
 
+// Macro Variables --- VARS --- in degrees, from brain screen
+		double pivotFlatPosition = 384;
+		double pivotLoaderPosition = 88;
+		double pivotReleasePosition = 500;
+		
+		double liftScoringPosition = 10000;
+		double liftLoaderPosition = 364.3;
+		double liftGroundGrabPosition = 465;
+		double liftUpwardMovementOnRelease = 500;
+		double liftTargetAfterScore = 10000;
 
 
 // AUTONOMOUS // // AUTONOMOUS // AUTONOMOUS // AUTONOMOUS //
@@ -158,7 +168,18 @@ void autonomous() {
 	// wait(2000);
 	// chassis.moveToPoint(10, 10, 10000);
     // chassis.waitUntilDone();
-	
+
+	toggles.toggleOnce();
+	macros.start(600,pivotFlatPosition,ClawState::off);
+	toggles.toggleOnce();
+
+	chassis.turnToHeading(48, 3000);
+
+	drivetrain.powerMotors(63,  63);
+	wait(2000);
+
+	claw.setState(ClawState::releasing);
+
 }
 
 void opcontrol() { // Driver control
@@ -226,16 +247,7 @@ void opcontrol() { // Driver control
 		claw.update(); // Apply button and macro commands to the motor every loop.
 
 		
-		// Macro Variables --- VARS --- in degrees, from brain screen
-		double pivotFlatPosition = 384;
-		double pivotLoaderPosition = 88;
-		double pivotReleasePosition = 500;
 		
-		double liftScoringPosition = 10000;
-		double liftLoaderPosition = 364.3;
-		double liftGroundGrabPosition = 465;
-		double liftUpwardMovementOnRelease = 500;
-		double liftTargetAfterScore = 10000;
 		
 		
 		// Macro Configuration
