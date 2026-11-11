@@ -1,33 +1,43 @@
 #pragma once
-#include "pros/motors.hpp"
 
-#include "main.h"
+#include "main.hpp"
+#include "pros/adi.hpp"
 
 enum class LiftState {
-    Up,
-    Down,
-    Hold,
-    Automatic
+    up,
+    down,
+    hold,
+    preset
 };
 
 class Lift {
     public:
-        Lift();
-        void initialize();
-
+        explicit Lift(int motorPort, int rotationPort);
         void setState(LiftState newState);
         LiftState getState() const;
+        
+        
+        // Caps preset targets at 1700 degrees without limiting manual movement.
+        void setTarget(double target);
+        double getTarget() const;
+        bool atTarget() const;
+
+        double getPosition() const;
+
         void update();
 
-        void setTarget(double target);
-        bool atTarget(double tolerance);
-        double getPosition();
-        void updatePositionControl();
-
     private:
-        pros::Motor liftMotor;
-        LiftState state = LiftState::Hold;
-        void moveLift(double power);
-        void liftHold();
+
+        pros::Motor motor;
+        pros::Rotation rotationSensor;
+
+        LiftState state = LiftState::hold;
+        
         double targetPosition = 0.0;
+
+        void customUpMode();
+        void customDownMode();
+        void holdMode();
+        void presetMode();
+        
 };

@@ -1,37 +1,76 @@
 // Import essential libraries
-#include "main.h"
+#include "main.hpp"
 #include "lemlib/api.hpp"
 #include "lemlib/chassis/chassis.hpp"
 #include "lemlib/chassis/trackingWheel.hpp"
+#include "mvlib/core.hpp"
+#include "pros/abstract_motor.hpp"
 #include "pros/misc.h"
 #include <cstdio>
 #include <cstdint>
+#include <cstdlib>
+#include <cmath>
+#include "pros/adi.hpp"
+#include "mvlib/api.hpp"
+#include "mvlib/Optional/lemlib.hpp"
+
 
 // Import Mechanism Classes
 #include "drivetrain.hpp"
-#include "intake.hpp"
 #include "lift.hpp"
-#include "arm.hpp"
+#include "pivot.hpp"
 #include "claw.hpp"
+#include "toggles.hpp"
 #include "macroManager.hpp"
+#include "autonomousLibrary.hpp"
 
-// Instantiate Mechanism Objects
-Drivetrain drivetrain;
-Intake intake;
-Lift lift;
-Arm arm;
-Claw claw('A');
-MacroManager macros(arm, lift, claw);
+// Import Jerry Paths
+ASSET(figure8_txt);
 
-// Set up devices for LemLib
+// Instantiate Mechanism Objects -- BRAIN PORTS
+const int leftFrontPort = -3; // negative port
+const int leftMiddlePort = 4; // negative port
+const int leftBackPort = -5; // negative port
+const int rightFrontPort = 8;
+const int rightMiddlePort = -7;
+const int rightBackPort = 6;
+
+const char shifterSolenoidPort = 'A';
+
+const int liftMotorPort = 15;
+const int liftRotationPort = -13; // negative port
+
+const int pivotMotorPort = -16; // negative port
+const int pivotRotationPort = 18;
+
+const int clawMotorPort = -19; // negative port
+
+const int leftTogglePort = 14;
+const int rightTogglePort = -21; // negative port
+
+const int interialPort = 1;
+const int verticalRotationPort = 9;
+const int horizontalRotationPort = 10;
+
+
+
+Drivetrain drivetrain(leftFrontPort, leftMiddlePort, leftBackPort, rightFrontPort, rightMiddlePort, rightBackPort, shifterSolenoidPort);
+Lift lift(liftMotorPort, liftRotationPort);
+Pivot pivot(pivotMotorPort, pivotRotationPort);
+Claw claw(clawMotorPort);
+Toggles toggles(leftTogglePort, rightTogglePort);
+MacroManager macros(pivot, lift, claw);
+
+// Set up devices for LemLib & our own code
 pros::Controller controller(pros::E_CONTROLLER_MASTER);
-pros::MotorGroup left_mg({-18, -16});
-pros::MotorGroup right_mg({12, 3});
-pros::Imu imu_sensor(7);
-pros::Rotation vertical_rotation(6);
-pros::Rotation horizontal_rotation(14);
-lemlib::TrackingWheel vertical_tracking(&vertical_rotation,lemlib::Omniwheel::NEW_275,-2.75); //replace this measurement
-lemlib::TrackingWheel horizontal_tracking(&horizontal_rotation,lemlib::Omniwheel::NEW_275,-4.00); //replace this measurement
+pros::MotorGroup left_mg({leftFrontPort, leftMiddlePort, leftBackPort}, pros::MotorGearset::green);
+pros::MotorGroup right_mg({rightFrontPort, rightMiddlePort, rightBackPort}, pros::MotorGearset::green);
+pros::Imu imu_sensor(interialPort); 
+pros::Rotation vertical_rotation(verticalRotationPort);
+pros::Rotation horizontal_rotation(horizontalRotationPort);
+pros::adi::AnalogIn lineSensor('G');
+lemlib::TrackingWheel vertical_tracking(&vertical_rotation,1.94,-0.315); 
+lemlib::TrackingWheel horizontal_tracking(&horizontal_rotation,1.94,-2.75);
 
 
 // LemLib setup
@@ -46,16 +85,16 @@ lemlib::OdomSensors odom_sensors(
 lemlib::Drivetrain lemlibDrivetrain(
 	&left_mg,
 	&right_mg,
-	11.5, // replace this measurement
+	12.88, // replace this measurement
 	lemlib::Omniwheel::NEW_325,
 	450, //rpm
 	2 //replace this measurement
 );
 
 lemlib::ControllerSettings lateral_controller(
-    10,   // kP
+    17,   // kP
     0,    // kI
-    30,   // kD
+    60,   // kD
     3,    // anti-windup
     1,    // small error range (in)
     100,  // small error timeout (ms)
@@ -65,9 +104,9 @@ lemlib::ControllerSettings lateral_controller(
 );
 
 lemlib::ControllerSettings angular_controller(
-    2,   // kP
+    4,   // kP
     0,    // kI
-    10,   // kD
+    33,   // kD
     3,    // anti-windup
     1,    // small error range (in)
     100,  // small error timeout (ms)
@@ -94,141 +133,168 @@ void on_center_button() {
 	}
 }
 
-void initialize() {
+void initialize() { // INIT
 	pros::lcd::initialize();
-	pros::lcd::set_text(1, "Hello PROS User!");
+	drivetrain.initialize();
+	toggles.initialize();
 	pros::lcd::register_btn1_cb(on_center_button);
-	
-	arm.initialize();
-	lift.initialize();
-	//chassis.calibrate();
-
+	chassis.calibrate();
+	chassis.setPose(0, 0, 0);
 }
 
 void disabled() {}
 void competition_initialize() {}
 
-void autonomous() {
-	chassis.setPose(0,0,0);
-	chassis.turnToHeading(90, 2000);
 
-}
+
+// AUTONOMOUS // // AUTONOMOUS // AUTONOMOUS // AUTONOMOUS //
+// AUTONOMOUS // // AUTONOMOUS // AUTONOMOUS // AUTONOMOUS //
+// AUTONOMOUS // // AUTONOMOUS // AUTONOMOUS // AUTONOMOUS //
+// AUTONOMOUS // // AUTONOMOUS // AUTONOMOUS // AUTONOMOUS //
+
+void autonomous() {}
 
 void opcontrol() { // Driver control
 	while (true) {
+		macros.update();
+		
 		// Get joysticks
 		int leftStick_Y = controller.get_analog(ANALOG_LEFT_Y);
 		int rightStick_X = controller.get_analog(ANALOG_RIGHT_X);
-		
+
 		
 		// Drive the robot
-		drivetrain.arcade(leftStick_Y,rightStick_X);
+		drivetrain.simpleArcade(leftStick_Y, rightStick_X);
 
-		// Control the intake
-		if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_A)) {
-			if (intake.getState() == IntakeState::Off) {
-				intake.setState(IntakeState::In);
-			} else {
-				intake.setState(IntakeState::Off);
-			}
-		} else if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_B)) {
-			if (intake.getState() == IntakeState::Off) {
-				intake.setState(IntakeState::Out);
-			} else {
-				intake.setState(IntakeState::Off);
-			}
+		// Control the shifter
+		if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_Y)) {
+			drivetrain.toggleShifter();
 		}
-		intake.update(); // Update the intake state based on the current state
 
 		
 		// Control the lift
 		if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_UP)) {
 			macros.cancel();
-			lift.setState(LiftState::Up);
+			lift.setState(LiftState::up);
 		} else if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_DOWN)) {
 			macros.cancel();
-			lift.setState(LiftState::Down);
-		} else if (lift.getState() == LiftState::Up || lift.getState() == LiftState::Down) {
-			lift.setState(LiftState::Hold); // only goes to hold if it was being manually moved
+			lift.setState(LiftState::down);
+		} else if (lift.getState() == LiftState::up || lift.getState() == LiftState::down) {
+			lift.setState(LiftState::hold); // only goes to hold if it was being manually moved
 		}
 		lift.update();
 
-		// Control the arm
-		if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_LEFT)) {
-			macros.cancel();
-			arm.armCustom(CustomOptions::Forward);
-		} else if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_RIGHT)) {
-			macros.cancel();
-			arm.armCustom(CustomOptions::Backward);
-		} else if (arm.getArmState() == ArmState::Custom) {
-			arm.armCustom(CustomOptions::Hold);
-		}
-
-		// Control the wrist
-		if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_L1)) {
-			macros.cancel();
-			arm.wristCustom(CustomOptions::Forward);
-		} else if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_L2)) {
-			macros.cancel();
-			arm.wristCustom(CustomOptions::Backward);
-		} else { // Since the driver doesn't want to change the wrist, level it to the last position
-			arm.wristAutoLevel(); // Automatically level the wrist when no buttons are pressed
-		}
-
-		// Toggle the wrist
-		if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_Y)) {
-			macros.cancel();
-			arm.toggleWristPosition();
-		}
-		arm.update(); // updates automatic arm positioning
-
-		// Some macros
-		if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_R1)) {
-    		macros.startMatchLoad();
-		} else if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_R2)) {
-			macros.startLowScore();
-		}
-		macros.update();
 		
-
-		// Toggle the claw open/close
-		if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_X)) {
+		// Control the pivot
+		if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_RIGHT)) {
 			macros.cancel();
-			if (claw.getState() == ClawState::Open) {
-				claw.setState(ClawState::Closed);
+			pivot.setState(PivotState::up);
+		} else if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_LEFT)) {
+			macros.cancel();
+			pivot.setState(PivotState::down);
+		} else if (pivot.getState() == PivotState::up || pivot.getState() == PivotState::down) {
+			pivot.setState(PivotState::hold);
+		}
+		pivot.update(); // updates automatic pivot positioning
+
+		
+		// Control the claw
+		if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_A)) { // the grab/off toggle
+			//macros.cancel();
+			if (claw.getState() == ClawState::grabbing) {
+				claw.setState(ClawState::off);
 			} else {
-				claw.setState(ClawState::Open);
+				claw.setState(ClawState::grabbing);
+			}
+		} else if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_B)) { // the release/off toggle
+			//macros.cancel();
+			if (claw.getState() == ClawState::releasing) {
+				claw.setState(ClawState::off);
+			} else {
+				claw.setState(ClawState::releasing);
 			}
 		}
-		claw.update();
+		claw.update(); // Apply button and macro commands to the motor every loop.
 
+		
+		// Macro Variables --- VARS --- in degrees, from brain screen
+		double pivotFlatPosition = 384;
+		double pivotLoaderPosition = 88;
+		double pivotReleasePosition = 500;
+		
+		double liftScoringPosition = 10000;
+		double liftLoaderPosition = 364.3;
+		double liftGroundGrabPosition = 465;
+		double liftUpwardMovementOnRelease = 500;
+		double liftTargetAfterScore = 10000;
+		
+		// Scoring macro:
+		// go down a few inches
+		// release claw AND up a few inches AND pivot back
 
-		// Print arm/wrist encoder values
-		static std::uint32_t lastDebugPrint = 0;
-		if (pros::millis() - lastDebugPrint >= 200) {
-			lastDebugPrint = pros::millis();
+		
+		// Macro Configuration
 
-			controller.print(
-				0,
-				0,
-				"A:%5.1f W:%5.1f",
-				arm.getArmAngle(),
-				arm.getWristAngle()
-			);
+		// Scoring Position
+		if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_R1)) {
+			macros.start(liftScoringPosition,pivotFlatPosition,ClawState::grabbing);
+		
+		// Match Loader Position
+		} else if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_L1)) {
+			macros.start(liftLoaderPosition, pivotLoaderPosition, ClawState::grabbing);
+		
+		// Ground Grab Position
+		} else if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_L2)) {
+			macros.start(liftGroundGrabPosition, pivotFlatPosition, ClawState::grabbing);
 
-			std::printf(
-				"Arm: %.1f | Wrist: %.1f\n",
-				arm.getArmAngle(),
-				arm.getWristAngle()
-			);
+		// Score/Release the cup/pin
+		} else if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_R2)) {
+			macros.start(liftTargetAfterScore, pivot.getPosition(), ClawState::releasing);
 		}
 
+		// Hold X to repeat full cycles; release finishes the current cycle.
+		toggles.update(controller.get_digital(pros::E_CONTROLLER_DIGITAL_X));
 
+		
+		
 
-		pros::delay(20);                               // Run for 20 ms then update
-	}
+		
 
+		// Print arm/lift encoder values
+		static std::uint32_t lastDebugPrint = 0;
+		if (pros::millis() - lastDebugPrint >= 100) {
+			lastDebugPrint = pros::millis();
+			
+			lemlib::Pose pose = chassis.getPose();
+			pros::lcd::print(0, "X: %.1f Y: %.1f H: %.1f",
+				pose.x, pose.y, pose.theta);
 
+			const double liftPosition = lift.getPosition();
+			if (std::isfinite(liftPosition)) {
+				pros::lcd::print(1, "Lift: %.1f / %.1f %s",
+					liftPosition, lift.getTarget(),
+					lift.atTarget() ? "READY" : "MOVING");
+			} else {
+				pros::lcd::print(1, "Lift: SENSOR ERR P%d / %.1f",
+					std::abs(liftRotationPort), lift.getTarget());
+			}
 
+			pros::lcd::print(2, "Pivot: %.1f / %.1f %s",
+				pivot.getPosition(), pivot.getTarget(),
+				pivot.atTarget() ? "READY" : "MOVING");
+			
+			ClawState clawState = claw.getState();
+			pros::lcd::print(3, "Claw: %s",
+				clawState == ClawState::grabbing ? "GRABBING" :
+				clawState == ClawState::releasing ? "RELEASING" :
+				"OFF");
 
-}
+			pros::lcd::print(4, "Drive: %s | RPM: %.0f",
+				drivetrain.getShifterState() == ShifterState::highSpeed
+					? "SPEED" : "TORQUE",
+				drivetrain.getRPM());
+			
+		} // close debug print block
+		pros::delay(20); // Yield on every driver-control iteration.
+	} // close master while true loop	
+}// close operator control function

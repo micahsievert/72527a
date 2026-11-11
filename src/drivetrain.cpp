@@ -1,21 +1,84 @@
 #include "drivetrain.hpp"
+#include "pros/motors.h"
+#include "pros/rtos.hpp"
 #include <algorithm>
 #include <cmath>
 #include <utility>
 
-Drivetrain::Drivetrain()
-    :   leftFront(-18),
-        leftBack(-16),
-        rightFront(12),
-        rightBack(3) {
+Drivetrain::Drivetrain(int leftFront, int leftMiddle, int leftBack, int rightFront, int rightMiddle, int rightBack, char shifterSolenoidPort)
+    :   leftFront(leftFront),
+        leftMiddle(leftMiddle),
+        leftBack(leftBack),
+        rightFront(rightFront),
+        rightMiddle(rightMiddle),
+        rightBack(rightBack),
+        shifter(shifterSolenoidPort)    {
 }
 
+void Drivetrain::initialize() {
+    // Configure startup state without delaying or moving the drive motors.
+    state = ShifterState::highSpeed;
+    shifter.set_value(true);
+    setBrakeMode(BrakeMode::Coast);
+    powerMotors(0, 0);
+}
+
+
+// Shifter Control
+void Drivetrain::jiggleRobot() {
+    double timeInEachDirection = 10; // milliseconds
+    double numOscilations = 4;
+    double oscilationPower = 50;
+
+    for (int i = 0; i < numOscilations; i++) {
+        powerMotors(oscilationPower, oscilationPower);
+        pros::delay(static_cast<std::uint32_t>(timeInEachDirection));
+        powerMotors(-oscilationPower, -oscilationPower);
+        pros::delay(static_cast<std::uint32_t>(timeInEachDirection));
+    }
+}
+
+void Drivetrain::setShifterState(ShifterState newState) {
+    state = newState;
+    if (newState == ShifterState::highSpeed) {
+        shifter.set_value(true);
+    } else if (newState == ShifterState::highTorque) {
+        shifter.set_value(false);
+    }
+    jiggleRobot();
+}
+ShifterState Drivetrain::getShifterState() const {
+    return state;
+}
+void Drivetrain::toggleShifter() {
+    ShifterState currentState = getShifterState();
+
+    if (currentState == ShifterState::highSpeed) {
+        setShifterState(ShifterState::highTorque);
+    } else if (currentState == ShifterState::highTorque) {
+        setShifterState(ShifterState::highSpeed);
+    }
+}
+
+// Get RPM
+double Drivetrain::getRPM() {
+    // Example implementation, replace with actual RPM calculation
+    return leftFront.get_actual_velocity();
+}
+
+
+
+
+
+
+// Drivetrain Power Control Supplements / Accessories
 double Drivetrain::applyDeadband(double input) {
     const double DEADBAND = 5.0;
     if (std::abs(input) < DEADBAND) { return 0; } 
     else { return input; }
 }
-double Drivetrain::applyCubicCurve(double input) {
+
+double Drivetrain::applyCubicPowerRamp(double input) {
     double inputCubed = input*input*input;
     double maxCubed = 127*127*127;
     double percentPower = inputCubed/maxCubed;
@@ -27,7 +90,7 @@ double Drivetrain::applyCubicCurve(double input) {
     return (cubicPower * cubicWeight + linearPower * linearWeight) / (cubicWeight + linearWeight);
 }
 
-double Drivetrain::applyQuadraticCurve(double input) {
+double Drivetrain::applyQuadraticPowerRamp(double input) {
     double inputSquared;
     if (input < 0) { inputSquared = input * input * -1; } 
     else { inputSquared = input * input; }
@@ -42,7 +105,7 @@ double Drivetrain::applyQuadraticCurve(double input) {
     return (quadraticPower * quadraticWeight + linearPower * linearWeight) / (quadraticWeight + linearWeight);
 }
     
-std::pair<double, double> Drivetrain::mixForwardTurn(double forward, double turn) {
+std::pair<double, double> Drivetrain::mixForwardAndTurn(double forward, double turn) {
     double leftPower = forward + turn;
     double rightPower = forward - turn;
     return {leftPower, rightPower};
@@ -63,93 +126,64 @@ std::pair<double, double> Drivetrain::normalizeMotorPowers(double left, double r
     return {normLeft,normRight};
 }
 
-double Drivetrain::slewify(double requestedPower, double prevPower){
-    double slewn = requestedPower;
-    double change = requestedPower - prevPower; // change in power - sign tells if getting more negative or more positive, number tells magnitude
-    bool speedingUp = std::abs(requestedPower) >= std::abs(prevPower); // true if speeding up, false if slowing down
-    double limit;
-
-    if (speedingUp) {
-        limit = slewAccel;
-    } else {
-        limit = slewDecel;
-    }
-
-    if (std::abs(change) > limit) { // is a slew necessary?
-        if (requestedPower > prevPower) { // higher quantity of power desired
-            slewn = prevPower + limit; // increase by limit
-        } else { // lower quantity of power desired
-            slewn = prevPower - limit; // decrease by limit
-        }
-    } else {
-        slewn = requestedPower;
-    }
-    slewn = std::clamp(slewn, -127.0, 127.0);
-    return slewn;
-}
-
-std::pair<double, double> Drivetrain::applySlew(double left, double right) {
-    double requestedLeft = left;
-    double requestedRight = right;
-    double slewnLeft = slewify(requestedLeft, prevLeftPower);
-    double slewnRight = slewify(requestedRight, prevRightPower);
-    
-    //Set currents to previous to prep for next loop
-    prevLeftPower = slewnLeft;
-    prevRightPower = slewnRight;
-
-    return {slewnLeft, slewnRight};
-}
 
 void Drivetrain::setBrakeMode(BrakeMode mode) {
     switch (mode) {
         case BrakeMode::Coast:
             leftFront.set_brake_mode(pros::E_MOTOR_BRAKE_COAST);
+            leftMiddle.set_brake_mode(pros::E_MOTOR_BRAKE_COAST);
             leftBack.set_brake_mode(pros::E_MOTOR_BRAKE_COAST);
             rightFront.set_brake_mode(pros::E_MOTOR_BRAKE_COAST);
+            rightMiddle.set_brake_mode(pros::E_MOTOR_BRAKE_COAST);
             rightBack.set_brake_mode(pros::E_MOTOR_BRAKE_COAST);
             break;
         case BrakeMode::Brake:
             leftFront.set_brake_mode(pros::E_MOTOR_BRAKE_BRAKE);
+            leftMiddle.set_brake_mode(pros::E_MOTOR_BRAKE_BRAKE);
             leftBack.set_brake_mode(pros::E_MOTOR_BRAKE_BRAKE);
             rightFront.set_brake_mode(pros::E_MOTOR_BRAKE_BRAKE);
+            rightMiddle.set_brake_mode(pros::E_MOTOR_BRAKE_BRAKE);
             rightBack.set_brake_mode(pros::E_MOTOR_BRAKE_BRAKE);
             break;
         case BrakeMode::Hold:
             leftFront.set_brake_mode(pros::E_MOTOR_BRAKE_HOLD);
+            leftMiddle.set_brake_mode(pros::E_MOTOR_BRAKE_HOLD);
             leftBack.set_brake_mode(pros::E_MOTOR_BRAKE_HOLD);
             rightFront.set_brake_mode(pros::E_MOTOR_BRAKE_HOLD);
+            rightMiddle.set_brake_mode(pros::E_MOTOR_BRAKE_HOLD);
             rightBack.set_brake_mode(pros::E_MOTOR_BRAKE_HOLD);
             break;
     }
 }
+
 void Drivetrain::powerMotors(double leftPower, double rightPower) {
     leftFront.move(leftPower);
+    leftMiddle.move(leftPower);
     leftBack.move(leftPower);
     rightFront.move(rightPower);
+    rightMiddle.move((rightPower));
     rightBack.move(rightPower);
 }
+
 
 void Drivetrain::arcade(double forward, double turn) {
     //Filter out deadband values
     forward = applyDeadband(forward);
     turn = applyDeadband(turn);
 
-    //Apply the cubic curve to incease sensitivity
-    forward = applyCubicCurve(forward);
-    turn = applyCubicCurve(turn);
+    // //Apply the cubic curve to incease sensitivity
+    // forward = applyCubicPowerRamp(forward);
+    // turn = applyCubicPowerRamp(turn);
 
     //Mix joysticks to get left and right motor powers
-    auto [leftPower, rightPower] = mixForwardTurn(forward, turn);
+    auto [leftPower, rightPower] = mixForwardAndTurn(forward, turn);
 
-    //Normalize powers to stay within range but still proportional
-    auto [normLeftPower, normRightPower] = normalizeMotorPowers(leftPower, rightPower);
+    // //Normalize powers to stay within range but still proportional
+    // auto [normLeftPower, normRightPower] = normalizeMotorPowers(leftPower, rightPower);
 
-    //Apply slew to limit acceleration and deceleration
-    auto [slewnLeftPower, slewnRightPower] = applySlew(normLeftPower, normRightPower);
+    
 
-    powerMotors(slewnLeftPower, slewnRightPower);
-    //powerMotors(0,0);
+    powerMotors(leftPower, rightPower);
 }
 
 void Drivetrain::tank(double leftPower, double rightPower) {
@@ -157,17 +191,15 @@ void Drivetrain::tank(double leftPower, double rightPower) {
     leftPower = applyDeadband(leftPower);
     rightPower = applyDeadband(rightPower);
 
-    //Apply the cubic curve to incease sensitivity
-    leftPower = applyCubicCurve(leftPower);
-    rightPower = applyCubicCurve(rightPower);
+    // //Apply the cubic curve to incease sensitivity
+    // leftPower = applyCubicCurve(leftPower);
+    // rightPower = applyCubicCurve(rightPower);
 
-    //Normalize powers to stay within range but still proportional
-    auto [normLeftPower, normRightPower] = normalizeMotorPowers(leftPower, rightPower);
+    // //Normalize powers to stay within range but still proportional
+    // auto [normLeftPower, normRightPower] = normalizeMotorPowers(leftPower, rightPower);
 
-    //Apply slew to limit acceleration and deceleration
-    auto [slewnLeftPower, slewnRightPower] = applySlew(normLeftPower, normRightPower);
 
-    powerMotors(slewnLeftPower, slewnRightPower);
+    powerMotors(leftPower, rightPower);
 }
 
 void Drivetrain::simpleTank(double leftPower, double rightPower) {
@@ -175,6 +207,6 @@ void Drivetrain::simpleTank(double leftPower, double rightPower) {
 }
 
 void Drivetrain::simpleArcade(double forward, double turn) {
-    auto [leftPower, rightPower] = mixForwardTurn(forward, turn);
+    auto [leftPower, rightPower] = mixForwardAndTurn(forward, turn);
     powerMotors(leftPower, rightPower);
 }

@@ -1,23 +1,28 @@
 #pragma once
 
-#include "main.h"
+#include "main.hpp"
 #include "pros/adi.hpp"
 
 enum class ClawState {
-    Open,
-    Closed,
+    grabbing,
+    releasing,
+    off
 };
 
 class Claw {
     public:
-        explicit Claw(std::uint8_t solenoidPort);
+        explicit Claw(int motorPort);
         void setState(ClawState newState);
         ClawState getState() const;
         void update();
 
     private:
 
-        pros::adi::DigitalOut solenoid;
-        ClawState state = ClawState::Open;
+        pros::Motor motor;
+        ClawState state = ClawState::off;
+        
+        void grabbingMode();
+        void releasingMode();
+        void offMode();
         
 };
