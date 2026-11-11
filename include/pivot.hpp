@@ -20,6 +20,7 @@ class Pivot {
         
         
         void setTarget(double target);
+        void holdCurrentPosition(); // Capture this position as the PD target.
         double getTarget() const;
         bool atTarget() const;
 

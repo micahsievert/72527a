@@ -35,6 +35,17 @@ void Lift::setTarget(double target) {
     targetPosition = std::min(target, maxTargetPosition);
     state = LiftState::preset;
 }
+void Lift::holdCurrentPosition() {
+    const double position = getPosition();
+    if (!std::isfinite(position)) {
+        state = LiftState::hold;
+        return;
+    }
+    // Capture once so PD corrects drift instead of following it.
+    targetPosition = position;
+    state = LiftState::preset;
+}
+
 double Lift::getTarget() const {
     return targetPosition;
 }

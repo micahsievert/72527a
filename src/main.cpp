@@ -50,7 +50,7 @@ const int rightTogglePort = -21; // negative port
 
 const int interialPort = 1;
 const int verticalRotationPort = 9;
-const int horizontalRotationPort = 10;
+const int horizontalRotationPort = -10; // negative port
 
 
 
@@ -69,8 +69,8 @@ pros::Imu imu_sensor(interialPort);
 pros::Rotation vertical_rotation(verticalRotationPort);
 pros::Rotation horizontal_rotation(horizontalRotationPort);
 pros::adi::AnalogIn lineSensor('G');
-lemlib::TrackingWheel vertical_tracking(&vertical_rotation,1.94,-0.315); 
-lemlib::TrackingWheel horizontal_tracking(&horizontal_rotation,1.94,-2.75);
+lemlib::TrackingWheel vertical_tracking(&vertical_rotation,1.97,-3.25); 
+lemlib::TrackingWheel horizontal_tracking(&horizontal_rotation,1.97,4.156);
 
 
 // LemLib setup
@@ -107,7 +107,7 @@ lemlib::ControllerSettings angular_controller(
     4,   // kP
     0,    // kI
     33,   // kD
-    3,    // anti-windup
+    1.5,    // anti-windup
     1,    // small error range (in)
     100,  // small error timeout (ms)
     3,    // large error range (in)
@@ -152,9 +152,18 @@ void competition_initialize() {}
 // AUTONOMOUS // // AUTONOMOUS // AUTONOMOUS // AUTONOMOUS //
 // AUTONOMOUS // // AUTONOMOUS // AUTONOMOUS // AUTONOMOUS //
 
-void autonomous() {}
+void autonomous() {
+	// drivetrain.setBrakeMode(BrakeMode::Hold);
+	// chassis.moveToPoint(10, 10, 10000);
+	// wait(2000);
+	// chassis.moveToPoint(10, 10, 10000);
+    // chassis.waitUntilDone();
+	
+}
 
 void opcontrol() { // Driver control
+	lift.holdCurrentPosition();
+	pivot.holdCurrentPosition();
 	while (true) {
 		macros.update();
 		
@@ -179,8 +188,8 @@ void opcontrol() { // Driver control
 		} else if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_DOWN)) {
 			macros.cancel();
 			lift.setState(LiftState::down);
-		} else if (lift.getState() == LiftState::up || lift.getState() == LiftState::down) {
-			lift.setState(LiftState::hold); // only goes to hold if it was being manually moved
+		} else if (lift.getState() == LiftState::up || lift.getState() == LiftState::down) { // In up or down mode, but no longer pressing the button
+			lift.holdCurrentPosition(); // Hold where the manual button was released
 		}
 		lift.update();
 
@@ -192,8 +201,8 @@ void opcontrol() { // Driver control
 		} else if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_LEFT)) {
 			macros.cancel();
 			pivot.setState(PivotState::down);
-		} else if (pivot.getState() == PivotState::up || pivot.getState() == PivotState::down) {
-			pivot.setState(PivotState::hold);
+		} else if (pivot.getState() == PivotState::up || pivot.getState() == PivotState::down) { // In up or down mode, but no longer pressing the button
+			pivot.holdCurrentPosition(); // Hold where the manual button was released
 		}
 		pivot.update(); // updates automatic pivot positioning
 
@@ -228,14 +237,10 @@ void opcontrol() { // Driver control
 		double liftUpwardMovementOnRelease = 500;
 		double liftTargetAfterScore = 10000;
 		
-		// Scoring macro:
-		// go down a few inches
-		// release claw AND up a few inches AND pivot back
-
 		
 		// Macro Configuration
 
-		// Scoring Position
+		// Scoring Position	
 		if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_R1)) {
 			macros.start(liftScoringPosition,pivotFlatPosition,ClawState::grabbing);
 		

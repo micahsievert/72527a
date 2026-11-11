@@ -19,6 +19,7 @@ class Lift {
         
         // Caps preset targets at 1700 degrees without limiting manual movement.
         void setTarget(double target);
+        void holdCurrentPosition(); // Capture this position as the PD target.
         double getTarget() const;
         bool atTarget() const;
 

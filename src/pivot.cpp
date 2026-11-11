@@ -25,6 +25,18 @@ void Pivot::setTarget(double target) {
     targetPosition = target;
     state = PivotState::preset;
 }
+void Pivot::holdCurrentPosition() {
+    const auto rawPosition = rotationSensor.get_position();
+    if (rawPosition == PROS_ERR) {
+        state = PivotState::hold;
+        return;
+    }
+    const double position = rawPosition / 100.0;
+    // Capture once so PD corrects drift instead of following it.
+    targetPosition = position;
+    state = PivotState::preset;
+}
+
 double Pivot::getTarget() const {
     return targetPosition;
 }
