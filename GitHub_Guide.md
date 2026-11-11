@@ -1,32 +1,24 @@
 # VEX 72527A — GitHub Quick Guide
 
 ## BEFORE CODING — Get the latest code
+Run this command in VS Code terminal:
 
-```bash
 git pull
-```
 
 Always do this before making changes so you have the latest version from GitHub.
 
 ## AFTER CODING — Save and upload changes
 
-Run these three commands in order:
+Run these three commands in VS Code terminal. Replace "change" with what you changed.
+All 3 lines can be run at once:
 
-```bash
 git add .
-git commit -m "Describe what you changed"
+git commit -m "change"
 git push
-```
-
-- `git add .` — Stage all changed files.
-- `git commit -m "..."` — Save a version locally. Change the message to describe your work.
-- `git push` — Upload your changes to GitHub.
 
 ## CHECK STATUS — See what's changed
 
-```bash
 git status
-```
 
 Shows which files have changed and whether you have uncommitted work.
 
@@ -41,5 +33,6 @@ Shows which files have changed and whether you have uncommitted work.
 ## Repository
 
 https://github.com/micahsievert/72527a
+
 
 **Remember: Pull → Code → Add → Commit → Push.**
