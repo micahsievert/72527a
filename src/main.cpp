@@ -148,13 +148,14 @@ void competition_initialize() {}
 // Macro Variables --- VARS --- in degrees, from brain screen
 		double pivotFlatPosition = 384;
 		double pivotLoaderPosition = 88;
-		double pivotReleasePosition = 500;
+		double pivotReleasePosition = 600;
 		
-		double liftScoringPosition = 10000;
+		double liftScoringPosition = 900;
 		double liftLoaderPosition = 364.3;
 		double liftGroundGrabPosition = 465;
 		double liftUpwardMovementOnRelease = 500;
 		double liftTargetAfterScore = 10000;
+		double liftSinglePinScorePosition = 210;
 
 
 // AUTONOMOUS // // AUTONOMOUS // AUTONOMOUS // AUTONOMOUS //
@@ -170,13 +171,17 @@ void autonomous() {
     // chassis.waitUntilDone();
 
 	toggles.toggleOnce();
-	macros.start(600,pivotFlatPosition,ClawState::off);
+	wait(1000);
 	toggles.toggleOnce();
+	wait(1000);
+	moveLiftAndPivot(210, pivotFlatPosition, 3000);
 
 	chassis.turnToHeading(48, 3000);
+	chassis.waitUntilDone();
 
 	drivetrain.powerMotors(63,  63);
 	wait(2000);
+	drivetrain.powerMotors(0, 0);
 
 	claw.setState(ClawState::releasing);
 
@@ -253,20 +258,17 @@ void opcontrol() { // Driver control
 		// Macro Configuration
 
 		// Scoring Position	
-		if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_R1)) {
+		if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_L1)) {
 			macros.start(liftScoringPosition,pivotFlatPosition,ClawState::grabbing);
 		
 		// Match Loader Position
-		} else if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_L1)) {
+		} else if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_L2)) {
 			macros.start(liftLoaderPosition, pivotLoaderPosition, ClawState::grabbing);
 		
-		// Ground Grab Position
-		} else if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_L2)) {
-			macros.start(liftGroundGrabPosition, pivotFlatPosition, ClawState::grabbing);
 
 		// Score/Release the cup/pin
-		} else if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_R2)) {
-			macros.start(liftTargetAfterScore, pivot.getPosition(), ClawState::releasing);
+		} else if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_R1)) {
+			macros.start(lift.getPosition()+50, pivotReleasePosition, ClawState::releasing);
 		}
 
 		// Hold X to repeat full cycles; release finishes the current cycle.
