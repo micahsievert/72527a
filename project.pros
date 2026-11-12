@@ -1,7 +1,7 @@
 {
   "py/object": "pros.conductor.project.Project",
   "py/state": {
-    "project_name": "v3.1",
+    "project_name": "v3.1 - Back",
     "target": "v5",
     "templates": {
       "LemLib": {
@@ -661,7 +661,9 @@
       }
     },
     "upload_options": {
-      "icon": "pros"
+      "icon": "pros",
+      "description": "Robot Rampage",
+      "slot": 2
     },
     "use_early_access": false
   }
