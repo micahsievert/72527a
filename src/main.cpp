@@ -151,11 +151,12 @@ void competition_initialize() {}
 		double pivotReleasePosition = 600;
 		
 		double liftScoringPosition = 900;
-		double liftLoaderPosition = 364.3;
+		double liftLoaderPosition = 711;
 		double liftGroundGrabPosition = 465;
 		double liftUpwardMovementOnRelease = 500;
 		double liftTargetAfterScore = 10000;
 		double liftSinglePinScorePosition = 210;
+		double liftNoRiseAbove = 1690; // R1 won't raise the lift above this height
 
 
 // AUTONOMOUS // // AUTONOMOUS // AUTONOMOUS // AUTONOMOUS //
@@ -440,8 +441,11 @@ void opcontrol() { // Driver control
 		
 
 		// Score/Release the cup/pin
+		// Rises 50 to clear the pin, unless already near the top - then scores in place
 		} else if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_R1)) {
-			macros.start(lift.getPosition()+50, pivotReleasePosition, ClawState::releasing);
+			const double liftNow = lift.getPosition();
+			const double liftScoreTarget = (liftNow > liftNoRiseAbove) ? liftNow : liftNow + 50;
+			macros.start(liftScoreTarget, pivotReleasePosition, ClawState::releasing);
 		}
 
 		// Hold X to repeat full cycles; release finishes the current cycle.
