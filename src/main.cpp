@@ -382,7 +382,7 @@ void opcontrol() { // Driver control
 
 		
 		// Control the lift
-		if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_UP)) {
+		if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_RIGHT)) {
 			macros.cancel();
 			lift.setState(LiftState::up);
 		} else if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_DOWN)) {
@@ -395,7 +395,7 @@ void opcontrol() { // Driver control
 
 		
 		// Control the pivot
-		if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_RIGHT)) {
+		if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_UP)) {
 			macros.cancel();
 			pivot.setState(PivotState::up);
 		} else if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_LEFT)) {
@@ -415,7 +415,7 @@ void opcontrol() { // Driver control
 			} else {
 				claw.setState(ClawState::grabbing);
 			}
-		} else if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_B)) { // the release/off toggle
+		} else if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_X)) { // the release/off toggle
 			//macros.cancel();
 			if (claw.getState() == ClawState::releasing) {
 				claw.setState(ClawState::off);
@@ -448,8 +448,8 @@ void opcontrol() { // Driver control
 			macros.start(liftScoreTarget, pivotReleasePosition, ClawState::releasing);
 		}
 
-		// Hold X to repeat full cycles; release finishes the current cycle.
-		toggles.update(controller.get_digital(pros::E_CONTROLLER_DIGITAL_X));
+		// Hold R2 to repeat full cycles; release finishes the current cycle.
+		toggles.update(controller.get_digital(pros::E_CONTROLLER_DIGITAL_R2));
 
 		
 		
