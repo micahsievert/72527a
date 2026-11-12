@@ -2,3 +2,7 @@
 /build/
 /.cache/
 .DS_Store
+
+# Generated per computer by PROS; never share compiler paths or dependency caches.
+/compile_commands.json
+/.d/

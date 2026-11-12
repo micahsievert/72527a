@@ -1,4 +1,5 @@
 #include "toggles.hpp"
+#include "pros/rtos.hpp"
 #include <cmath>
 
 namespace {
@@ -34,6 +35,13 @@ void Toggles::toggleOnce() {
     leftMotor.move_absolute(leftTarget, toggleVelocity);
     rightMotor.move_absolute(rightTarget, toggleVelocity);
     cycleRunning = true;
+}
+
+void Toggles::waitUntilDone() {
+    while (cycleRunning) {
+        update(false);
+        if (cycleRunning) pros::delay(10);
+    }
 }
 
 void Toggles::update(bool pressed) {

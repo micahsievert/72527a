@@ -164,26 +164,97 @@ void competition_initialize() {}
 // AUTONOMOUS // // AUTONOMOUS // AUTONOMOUS // AUTONOMOUS //
 
 void autonomous() {
-	// drivetrain.setBrakeMode(BrakeMode::Hold);
-	// chassis.moveToPoint(10, 10, 10000);
-	// wait(2000);
-	// chassis.moveToPoint(10, 10, 10000);
-    // chassis.waitUntilDone();
-
+	// set toggle round 1 in motion
 	toggles.toggleOnce();
-	wait(1000);
-	toggles.toggleOnce();
-	wait(1000);
-	moveLiftAndPivot(210, pivotFlatPosition, 3000);
 
-	chassis.turnToHeading(48, 3000);
+	// raise the pivot to flat position
+	moveLiftAndPivot(250, pivotFlatPosition, 400);
+
+	// make sure toggle round 1 is done
+	toggles.waitUntilDone();
+
+	// do toggle round 2
+	toggles.toggleOnce();
+	toggles.waitUntilDone();
+
+	
+	// face the goal
+	chassis.turnToHeading(44, 500);
 	chassis.waitUntilDone();
 
+	// turn on the claw
+	claw.setState(ClawState::grabbing);
+	claw.update();
+
+	// Drive up to goal
 	drivetrain.powerMotors(63,  63);
-	wait(2000);
+	wait(1000); // place to cut time???
 	drivetrain.powerMotors(0, 0);
 
+	// lower the lift to score the preload pin
+	moveLiftTo(20, 500);
+
+	// release the preload pin
 	claw.setState(ClawState::releasing);
+	claw.update();
+	wait(500); // save time???
+
+	// raise lift to height for grabbing next stack
+	moveLiftTo(900,800);
+	
+	lift.setState(LiftState::hold);
+	lift.update();
+
+	// turn off claw
+	claw.setState(ClawState::off);
+	claw.update();
+
+	// back off goal
+	driveRotations(-0.3,63);
+
+	// face stack
+	chassis.turnToPoint(33.4, 13.3, 1000);
+	chassis.waitUntilDone();
+	
+	// quick movement toward stack
+	chassis.moveToPose(26.3, 10.3, 63.8, 2000, {.maxSpeed = 50});
+	chassis.waitUntilDone();
+
+	// finer movement toward stack
+	chassis.moveToPose(32.8, 13.2, 64.9, 3000, {.maxSpeed = 10});
+	chassis.waitUntilDone();
+	
+	// grab stack
+	claw.setState(ClawState::grabbing);
+	claw.update();
+	moveLiftTo(liftGroundGrabPosition-50, 800);
+	wait(500); // cut time???
+
+	// lift the stack up
+	moveLiftTo(1000,1000);
+
+	// face the goal
+	chassis.turnToHeading(-63, 2000);
+	// lift the stack up
+	moveLiftTo(1000,1000);
+	lift.setState(LiftState::hold);
+	lift.update();
+	chassis.waitUntilDone();
+
+	// drive to the goal
+	drivetrain.powerMotors(100, 100);
+	wait(800);
+
+	// lower the lift
+	moveLiftTo(450,500);
+	
+	// release the thing
+	claw.setState(ClawState::releasing);
+	claw.update();
+	wait(200);
+
+	// raise the lift back up
+	moveLiftTo(800,500);
 
 }
 

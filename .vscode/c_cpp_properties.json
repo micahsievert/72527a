@@ -4,19 +4,12 @@
       "name": "PROS Project",
       "includePath": [
         "${workspaceFolder}/include/**",
-        "/Users/micahsievert/Desktop/v1-pros/include",
-        "/Users/micahsievert/Desktop/v2-pros/include",
-        "/Users/micahsievert/Desktop/v2-pros JSASSY 8.6.26/include",
-        "/Users/micahsievert/Desktop/v2-pros fixed auton/include",
-        "/Users/micahsievert/Desktop/v2-pros fixed auton dashed/include",
-        "/Users/micahsievert/Documents/Robot/v3/include",
         "/Users/micahsievert/Documents/Robot/v3.1/include"
       ],
       "defines": [
         "_PROS_INCLUDE_LIBLVGL_LLEMU_H",
         "_PROS_INCLUDE_LIBLVGL_LLEMU_HPP"
       ],
-      "compilerPath": "/Users/micahsievert/Library/Application Support/Code/User/globalStorage/sigbots.pros/install/pros-toolchain-macos/bin/arm-none-eabi-g++",
       "cStandard": "gnu11",
       "cppStandard": "gnu++20",
       "intelliSenseMode": "gcc-arm",
@@ -27,9 +20,11 @@
         "limitSymbolsToIncludedHeaders": true,
         "databaseFilename": ""
       },
+      "compileCommands": "${workspaceFolder}/compile_commands.json",
       "macFrameworkPath": [
         "/System/Library/Frameworks"
-      ]
+      ],
+      "compilerPath": "/Users/micahsievert/Library/Application Support/Code/User/globalStorage/sigbots.pros/install/pros-toolchain-macos/bin/arm-none-eabi-g++"
     }
   ],
   "version": 4

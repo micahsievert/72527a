@@ -13,6 +13,8 @@ public:
 
     
     void toggleOnce();
+    // Blocks until both motors reach their cycle targets.
+    void waitUntilDone();
     void update(bool pressed);
 
 private:
