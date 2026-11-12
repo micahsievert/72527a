@@ -1,2 +1,5 @@
 # Auto detect text files and perform LF normalization
 * text=auto
+
+# Embedded path assets must have identical bytes on Windows and macOS.
+static/*.txt text eol=lf

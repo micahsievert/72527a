@@ -6,3 +6,6 @@
 # Generated per computer by PROS; never share compiler paths or dependency caches.
 /compile_commands.json
 /.d/
+
+# PROS/editor tools may rewrite this with machine-specific compiler paths.
+/.vscode/c_cpp_properties.json

@@ -7,7 +7,10 @@
    https://pros.cs.purdue.edu/v5/getting-started/windows.html
 2. Clone this repository and open the folder containing `project.pros` in VS Code.
    On Windows, use a simple path such as `C:/Robot/72527a` to avoid build-tool issues with spaces.
-3. Open a terminal through PROS so its ARM compiler and build tools are available. Run:
+3. Copy `.vscode/c_cpp_properties.example.json` to `.vscode/c_cpp_properties.json`
+   (replace an old local copy if it contains another computer's paths). This local file
+   is ignored by Git because editor tools can rewrite it with absolute paths.
+4. Open a terminal through PROS so its ARM compiler and build tools are available. Run:
 
    ```sh
    pros make clean
@@ -19,6 +22,14 @@ Use PROS Build for this project, not VS Code's generic "Run C++ File" button.
 `compile_commands.json` is generated separately on each computer for editor completion;
 regenerate it after moving the project or changing the toolchain. It and `.d/` are ignored
 by Git because they are generated local files.
+
+If includes have red underlines, ensure VS Code opened the project folder itself (the
+folder containing `include`, `src`, and `project.pros`), regenerate the compile database
+above, then run **C/C++: Reset IntelliSense Database** and **Developer: Reload Window**
+from the Command Palette. The local compiler path must point to your PROS ARM compiler,
+not another person's installation or a desktop C++ compiler.
+If PROS Build fails too, capture the first compiler error and the command used to build;
+editor include settings do not change the Makefile's compiler include paths.
 
 The current build requests `gnu23` / `gnu++26` and is verified with ARM GCC 14.3.1.
 If a compiler reports an unsupported standard or linker option, check the PROS toolchain

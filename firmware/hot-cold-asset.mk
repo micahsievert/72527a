@@ -5,6 +5,11 @@ else
 ASSET_FILES=$(wildcard static/*) $(wildcard static.lib/*)
 endif
 
+# LemLib.a already contains this demo asset. Embedding it again can collide
+# with its cold-package symbol, especially after Windows line-ending conversion.
+# The robot uses figure8.txt; keep the unused example file out of the link.
+ASSET_FILES := $(filter-out static/example.txt,$(ASSET_FILES))
+
 TEMPLATE_FILES+=$(wildcard static/*) $(wildcard firmware/hot-cold-asset.mk)
 
 ASSET_OBJ=$(addprefix $(BINDIR)/, $(addsuffix .o, $(ASSET_FILES)) )
