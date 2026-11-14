@@ -18,7 +18,7 @@ Drivetrain::Drivetrain(int leftFront, int leftMiddle, int leftBack, int rightFro
 void Drivetrain::initialize() {
     // Configure startup state without delaying or moving the drive motors.
     state = ShifterState::highSpeed;
-    shifter.set_value(true);
+    shifter.set_value(false);
     setBrakeMode(BrakeMode::Coast);
     powerMotors(0, 0);
 }
@@ -41,9 +41,9 @@ void Drivetrain::jiggleRobot() {
 void Drivetrain::setShifterState(ShifterState newState) {
     state = newState;
     if (newState == ShifterState::highSpeed) {
-        shifter.set_value(true);
-    } else if (newState == ShifterState::highTorque) {
         shifter.set_value(false);
+    } else if (newState == ShifterState::highTorque) {
+        shifter.set_value(true);
     }
     jiggleRobot();
 }
