@@ -220,11 +220,11 @@ void rightSideAuton() {
 	chassis.waitUntilDone();
 
 	// quick movement toward stack
-	chassis.moveToPose(26.3, 10.3, 63.8, 2000, {.maxSpeed = 50});
+	chassis.moveToPose(26.3, 10.3, 63.8, 2100, {.maxSpeed = 50});
 	chassis.waitUntilDone();
 
 	// finer movement toward stack
-	chassis.moveToPose(32.8, 13.2, 64.9, 3000, {.maxSpeed = 10});
+	chassis.moveToPose(33.7, 13.6, 64.9, 3000, {.maxSpeed = 30});
 	chassis.waitUntilDone();
 
 	// grab stack
@@ -258,6 +258,10 @@ void rightSideAuton() {
 
 	// raise the lift back up
 	moveLiftTo(800, 500);
+	lift.setState(LiftState::hold);
+	lift.update();
+	pivot.setState(PivotState::hold);
+	pivot.update();
 }
 
 // Back Side: mirror of the Right Side (x -> -x, heading -> -heading)
@@ -275,8 +279,8 @@ void backSideAuton() {
 	toggles.toggleOnce();
 	toggles.waitUntilDone();
 
-	// face the goal (mirrored: 44 -> -44)
-	chassis.turnToHeading(-44, 500);
+	// face the goal (mirrored: 50 -> -50)
+	chassis.turnToHeading(-50, 500);
 	chassis.waitUntilDone();
 
 	// turn on the claw
@@ -296,61 +300,67 @@ void backSideAuton() {
 	claw.update();
 	wait(500);
 
-	// raise lift to height for grabbing next stack
-	moveLiftTo(900, 800);
+	// Raise lift in case of being too low and descoring the scored pin
+	moveLiftTo(600, 800);
 	lift.setState(LiftState::hold);
 	lift.update();
 
-	// turn off claw
-	claw.setState(ClawState::off);
-	claw.update();
+	// // raise lift to height for grabbing next stack
+	// moveLiftTo(900, 800);
+	// lift.setState(LiftState::hold);
+	// lift.update();
 
-	// back off goal
-	driveRotations(-0.3, 63);
+	// // turn off claw
+	// claw.setState(ClawState::off);
+	// claw.update();
 
-	// face stack (mirrored)
-	chassis.turnToPoint(-33.4, 13.3, 1000);
-	chassis.waitUntilDone();
+	// // back off goal
+	// driveRotations(-0.3, 63);
 
-	// quick movement toward stack (mirrored)
-	chassis.moveToPose(-26.3, 10.3, -63.8, 2000, {.maxSpeed = 50});
-	chassis.waitUntilDone();
+	// // face stack (mirrored)
+	// chassis.turnToPoint(-33.4, 13.3, 1000);
+	// chassis.waitUntilDone();
 
-	// finer movement toward stack (mirrored)
-	chassis.moveToPose(-32.8, 13.2, -64.9, 3000, {.maxSpeed = 10});
-	chassis.waitUntilDone();
+	// // quick movement toward stack (mirrored)
+	// chassis.moveToPose(-26.3, 10.3, -63.8, 2000, {.maxSpeed = 50});
+	// chassis.waitUntilDone();
 
-	// grab stack
-	claw.setState(ClawState::grabbing);
-	claw.update();
-	moveLiftTo(liftGroundGrabPosition - 50, 800);
-	wait(500);
+	// // finer movement toward stack (mirrored)
+	// chassis.moveToPose(-32.8, 13.2, -64.9, 3000, {.maxSpeed = 10});
+	// chassis.waitUntilDone();
 
-	// lift the stack up
-	moveLiftTo(1000, 1000);
+	// // grab stack
+	// claw.setState(ClawState::grabbing);
+	// claw.update();
+	// moveLiftTo(liftGroundGrabPosition - 50, 800);
+	// wait(500);
 
-	// face the goal (mirrored: -63 -> 63)
-	chassis.turnToHeading(63, 2000);
-	moveLiftTo(1000, 1000);
-	lift.setState(LiftState::hold);
-	lift.update();
-	chassis.waitUntilDone();
+	// // lift the stack up
+	// moveLiftTo(1000, 1000);
 
-	// drive to the goal
-	drivetrain.powerMotors(100, 100);
-	wait(800);
-	drivetrain.powerMotors(0, 0);
+	// // face the goal (mirrored: -63 -> 63)
+	// chassis.turnToHeading(63, 2000);
+	// moveLiftTo(1000, 1000);
+	// lift.setState(LiftState::hold);
+	// lift.update();
+	// chassis.waitUntilDone();
 
-	// lower the lift
-	moveLiftTo(450, 500);
+	// // drive to the goal
+	// drivetrain.powerMotors(100, 100);
+	// wait(800);
+	// drivetrain.powerMotors(0, 0);
 
-	// release the thing
-	claw.setState(ClawState::releasing);
-	claw.update();
-	wait(200);
+	// // lower the lift
+	// moveLiftTo(450, 500);
 
-	// raise the lift back up
-	moveLiftTo(800, 500);
+	// // release the thing
+	// claw.setState(ClawState::releasing);
+	// claw.update();
+	// wait(200);
+
+	// // raise the lift back up
+	// moveLiftTo(800, 500);
+	
 }
 
 void autonomous() {
@@ -379,7 +389,7 @@ void opcontrol() { // Driver control
 		if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_Y)) {
 			drivetrain.toggleShifter();
 		}
-		
+
 		// Show the drive mode on the controller screen (only when it changes)
 		static int shownMode = -1;                    // -1 = nothing shown yet
 		static std::uint32_t lastControllerPrint = 0;
