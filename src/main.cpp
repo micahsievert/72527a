@@ -183,7 +183,7 @@ void rightSideAuton() {
 	toggles.waitUntilDone();
 
 	// face the goal
-	chassis.turnToHeading(44, 500);
+	chassis.turnToHeading(50, 500);
 	chassis.waitUntilDone();
 
 	// turn on the claw
@@ -379,7 +379,19 @@ void opcontrol() { // Driver control
 		if (controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_Y)) {
 			drivetrain.toggleShifter();
 		}
-
+		
+		// Show the drive mode on the controller screen (only when it changes)
+		static int shownMode = -1;                    // -1 = nothing shown yet
+		static std::uint32_t lastControllerPrint = 0;
+		const int mode = static_cast<int>(drivetrain.getShifterState());
+		if (mode != shownMode && pros::millis() - lastControllerPrint >= 60) {
+			lastControllerPrint = pros::millis();
+			const char* text = (drivetrain.getShifterState() == ShifterState::highSpeed)
+				? "SPEED   " : "TORQUE  ";
+			if (controller.print(0, 0, "%s", text) == 1) {
+				shownMode = mode;                     // only mark done if it worked
+			}
+		}
 		
 		// Control the lift
 		if (controller.get_digital(pros::E_CONTROLLER_DIGITAL_RIGHT)) {
