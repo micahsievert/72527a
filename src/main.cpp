@@ -151,7 +151,7 @@ void competition_initialize() {}
 		double pivotReleasePosition = 600;
 		
 		double liftScoringPosition = 900;
-		double liftLoaderPosition = 711;
+		double liftLoaderPosition = 418;
 		double liftGroundGrabPosition = 465;
 		double liftUpwardMovementOnRelease = 500;
 		double liftTargetAfterScore = 10000;
@@ -165,7 +165,7 @@ void competition_initialize() {}
 // AUTONOMOUS // // AUTONOMOUS // AUTONOMOUS // AUTONOMOUS //
 
 // Pick which route runs: true = Right Side (original), false = Back Side (mirrored)
-constexpr bool RUN_RIGHT_SIDE = false;
+constexpr bool RUN_RIGHT_SIDE = true;
 
 // Right Side: the original route
 void rightSideAuton() {
