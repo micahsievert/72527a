@@ -157,7 +157,7 @@ void competition_initialize() {}
 		double liftTargetAfterScore = 10000;
 		double liftSinglePinScorePosition = 210;
 		double liftNoRiseAbove = 1690; // R1 won't raise the lift above this height
-
+	  double liftManualScoreRise = 200; // X raises the lift this much when releasing
 
 // AUTONOMOUS // // AUTONOMOUS // AUTONOMOUS // AUTONOMOUS //
 // AUTONOMOUS // // AUTONOMOUS // AUTONOMOUS // AUTONOMOUS //
@@ -183,7 +183,7 @@ void rightSideAuton() {
 	toggles.waitUntilDone();
 
 	// face the goal
-	chassis.turnToHeading(50, 500);
+	chassis.turnToHeading(44, 500);
 	chassis.waitUntilDone();
 
 	// turn on the claw
@@ -191,7 +191,7 @@ void rightSideAuton() {
 	claw.update();
 
 	// Drive up to goal
-	drivetrain.powerMotors(63, 63);
+	drivetrain.powerMotors(50, 50);
 	wait(1000);
 	drivetrain.powerMotors(0, 0);
 
@@ -216,15 +216,15 @@ void rightSideAuton() {
 	driveRotations(-0.3, 63);
 
 	// face stack
-	chassis.turnToPoint(33.4, 13.3, 1000);
+	chassis.turnToPoint(33.0, 14.2, 1000);
 	chassis.waitUntilDone();
 
 	// quick movement toward stack
-	chassis.moveToPose(26.3, 10.3, 63.8, 2100, {.maxSpeed = 50});
+	chassis.moveToPose(26.3, 10.3, 63.8, 2100, {.maxSpeed = 40});
 	chassis.waitUntilDone();
 
 	// finer movement toward stack
-	chassis.moveToPose(33.7, 13.6, 64.9, 3000, {.maxSpeed = 30});
+	chassis.moveToPose(33.6, 14.2, 64.9, 3000, {.maxSpeed = 25});
 	chassis.waitUntilDone();
 
 	// grab stack
@@ -442,7 +442,17 @@ void opcontrol() { // Driver control
 			if (claw.getState() == ClawState::releasing) {
 				claw.setState(ClawState::off);
 			} else {
+				// Manual score: release, wait for the claw to let go, then lift up, in case being to low and knock over pin
+				macros.cancel();
 				claw.setState(ClawState::releasing);
+				claw.update();                 							// start releasing right now
+				pros::delay(200);              // give the pin time to come out
+
+				// lift up to clear the pin (stay in place if already near the top, same rule as R1)
+				const double liftNow = lift.getPosition();
+				if (std::isfinite(liftNow) && liftNow <= liftNoRiseAbove) {
+					lift.setTarget(liftNow + liftManualScoreRise);
+				}
 			}
 		}
 		claw.update(); // Apply button and macro commands to the motor every loop.
