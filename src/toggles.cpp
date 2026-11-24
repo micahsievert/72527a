@@ -4,7 +4,7 @@
 
 namespace {
 constexpr int toggleVelocity = 1000; // RPM.
-constexpr double toggleDegrees = 360.0 * 1.5; // compensate for 12:18 gear ratio
+constexpr double toggleDegrees = 360.0; 
 constexpr double positionTolerance = 3.0; // Motor degrees.
 }
 
