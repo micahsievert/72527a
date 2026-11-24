@@ -24,5 +24,6 @@ private:
     bool cycleRunning = false;
     double leftTarget = 0.0;
     double rightTarget = 0.0;
+    std::uint32_t cycleStartMs = 0;
 
 };
