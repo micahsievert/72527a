@@ -46,7 +46,7 @@ const int pivotRotationPort = 18;
 const int clawMotorPort = -19; // negative port
 
 const int leftTogglePort = 14;
-const int rightTogglePort = 21; 
+const int rightTogglePort = -21; 
 
 const int interialPort = 1;
 const int verticalRotationPort = 9;
